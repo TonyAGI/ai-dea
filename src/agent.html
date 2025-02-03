@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Modern AI Assistant Chat</title>
+  <style>
+    /* Global Reset */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background-color: #000;
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    /* Chat overlay container */
+    .chat-overlay {
+      background-color: #1a1a1a;
+      width: 768px;
+      height: 116px;
+      border-radius: 50px; /* Extra round edges */
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    /* Chat input area styling */
+    .chat-input {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      height: 100%;
+    }
+    .chat-input input {
+      flex: 1;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 30px; /* Fully rounded input */
+      padding: 15px 20px;
+      color: #fff;
+      font-size: 1em;
+      outline: none;
+      transition: border 0.3s ease;
+    }
+    .chat-input input:focus {
+      border-color: #6c63ff;
+    }
+    .chat-input button {
+      background: #6c63ff;
+      border: none;
+      padding: 15px 20px;
+      margin-left: 15px;
+      border-radius: 30px;
+      color: #fff;
+      font-size: 1em;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    .chat-input button:hover {
+      background: #5750d4;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-overlay">
+    <div class="chat-input">
+      <input type="text" placeholder="Type your message..." />
+      <button type="button">Send</button>
+    </div>
+  </div>
+</body>
+</html>
+
