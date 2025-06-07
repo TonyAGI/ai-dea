@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Modern AI Assistant Chat</title>
+  <title>AI Assistant Chat with Canvas</title>
   <style>
     /* Global Reset */
     * {
@@ -15,66 +15,385 @@
       background-color: #000;
       font-family: "Helvetica Neue", Arial, sans-serif;
       height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: grid;
+      grid-template-columns: 400px 1fr;
+      grid-template-rows: 1fr;
+      gap: 10px;
+      padding: 10px;
     }
-    /* Chat overlay container */
-    .chat-overlay {
+
+    /* Window styling */
+    .window {
       background-color: #1a1a1a;
-      width: 768px;
-      height: 116px;
-      border-radius: 50px; /* Extra round edges */
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
-      display: flex;
-      align-items: center;
-      padding: 0 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      color: #fff;
     }
-    /* Chat input area styling */
-    .chat-input {
-      flex: 1;
+
+    /* Top left windows container */
+    .top-left-container {
+      grid-column: 1;
+      grid-row: 1;
       display: flex;
-      align-items: center;
+      flex-direction: column;
+      gap: 10px;
       height: 100%;
     }
-    .chat-input input {
+
+    /* Canvas window */
+    .canvas-window {
+      flex: 2;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #canvas {
+      flex: 1;
+      background: #2a2a2a;
+      border-radius: 5px;
+      cursor: crosshair;
+    }
+
+    /* Chat history window */
+    .chat-history {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-history .history-list {
+      flex: 1;
+      overflow-y: auto;
+      margin-bottom: 10px;
+      padding: 5px;
+    }
+
+    .history-item {
+      padding: 8px;
+      margin-bottom: 5px;
+      background: #2a2a2a;
+      border-radius: 5px;
+      font-size: 0.9em;
+    }
+
+    /* Main message box */
+    .message-box {
+      grid-column: 2;
+      grid-row: 1;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .message-box .messages {
+      flex: 1;
+      overflow-y: auto;
+      margin-bottom: 15px;
+      padding: 10px;
+    }
+
+    .message {
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 5px;
+      max-width: 80%;
+    }
+
+    .user-message {
+      background: #2a2a2a;
+      margin-left: auto;
+    }
+
+    .llm-message {
+      background: #3a3a3a;
+      margin-right: auto;
+    }
+
+    .message img {
+      max-width: 100%;
+      border-radius: 5px;
+      margin-top: 5px;
+    }
+
+    .message-box .input-area {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
+    .message-box .input-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .message-box textarea {
       flex: 1;
       background: transparent;
       border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 30px; /* Fully rounded input */
-      padding: 15px 20px;
+      border-radius: 5px;
+      padding: 10px;
       color: #fff;
       font-size: 1em;
       outline: none;
-      transition: border 0.3s ease;
+      resize: none;
+      min-height: 60px;
     }
-    .chat-input input:focus {
-      border-color: #6c63ff;
+
+    .message-box .image-preview {
+      max-width: 100px;
+      max-height: 100px;
+      border-radius: 5px;
+      display: none;
     }
-    .chat-input button {
+
+    .message-box .button-group {
+      display: flex;
+      gap: 5px;
+    }
+
+    .message-box button {
       background: #6c63ff;
       border: none;
-      padding: 15px 20px;
-      margin-left: 15px;
-      border-radius: 30px;
+      padding: 10px 20px;
+      border-radius: 5px;
       color: #fff;
       font-size: 1em;
       cursor: pointer;
       transition: background 0.3s ease;
     }
-    .chat-input button:hover {
+
+    .message-box button:hover {
       background: #5750d4;
+    }
+
+    .message-box .image-upload {
+      background: #4a4a4a;
+    }
+
+    .message-box .image-upload:hover {
+      background: #5a5a5a;
     }
   </style>
 </head>
 <body>
-  <div class="chat-overlay">
-    <div class="chat-input">
-      <input type="text" placeholder="Type your message..." />
-      <button type="button">Send</button>
+  <div class="top-left-container">
+    <div class="window canvas-window">
+      <h3>Canvas</h3>
+      <canvas id="canvas"></canvas>
+    </div>
+
+    <div class="window chat-history">
+      <h3>Chat History</h3>
+      <div class="history-list">
+        <div class="history-item">Previous conversation 1</div>
+        <div class="history-item">Previous conversation 2</div>
+        <div class="history-item">Previous conversation 3</div>
+      </div>
     </div>
   </div>
+
+  <div class="window message-box">
+    <div class="messages">
+      <div class="message llm-message">
+        Hello! I'm your AI assistant. How can I help you today?
+      </div>
+      <div class="message user-message">
+        Hi! Can you help me with this design?
+      </div>
+      <div class="message llm-message">
+        Of course! I'd be happy to help with your design. Feel free to share images or describe what you're working on.
+      </div>
+    </div>
+    <div class="input-area">
+      <div class="input-container">
+        <textarea placeholder="Type your message..."></textarea>
+        <img class="image-preview" id="imagePreview" alt="Image preview">
+      </div>
+      <div class="button-group">
+        <input type="file" id="imageInput" accept="image/*" style="display: none">
+        <button class="image-upload" onclick="document.getElementById('imageInput').click()">📷</button>
+        <button type="button">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Canvas setup
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+    let lastX = 0;
+    let lastY = 0;
+
+    // Chat functionality
+    const messagesContainer = document.querySelector('.messages');
+    const messageInput = document.querySelector('textarea');
+    const sendButton = document.querySelector('button[type="button"]');
+    const historyList = document.querySelector('.history-list');
+    
+    // Store chat history
+    let chatHistory = JSON.parse(localStorage.getItem('chatHistory')) || [];
+    let currentChatId = Date.now().toString();
+
+    // Initialize chat history display
+    function initializeChatHistory() {
+      historyList.innerHTML = '';
+      chatHistory.forEach(chat => {
+        const historyItem = document.createElement('div');
+        historyItem.className = 'history-item';
+        historyItem.textContent = chat.title || 'Chat ' + new Date(chat.id).toLocaleString();
+        historyItem.onclick = () => loadChat(chat.id);
+        historyList.appendChild(historyItem);
+      });
+    }
+
+    // Load a specific chat
+    function loadChat(chatId) {
+      currentChatId = chatId;
+      const chat = chatHistory.find(c => c.id === chatId);
+      if (chat) {
+        messagesContainer.innerHTML = '';
+        chat.messages.forEach(msg => {
+          appendMessage(msg.text, msg.type, msg.image);
+        });
+      }
+    }
+
+    // Save current chat
+    function saveChat() {
+      const messages = Array.from(messagesContainer.children).map(msg => ({
+        text: msg.textContent,
+        type: msg.classList.contains('user-message') ? 'user' : 'llm',
+        image: msg.querySelector('img')?.src
+      }));
+
+      const chatIndex = chatHistory.findIndex(c => c.id === currentChatId);
+      const chatData = {
+        id: currentChatId,
+        title: messages[0]?.text?.substring(0, 30) + '...' || 'New Chat',
+        messages: messages,
+        timestamp: Date.now()
+      };
+
+      if (chatIndex === -1) {
+        chatHistory.push(chatData);
+      } else {
+        chatHistory[chatIndex] = chatData;
+      }
+
+      localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+      initializeChatHistory();
+    }
+
+    // Append a message to the chat
+    function appendMessage(text, type, image = null) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${type}-message`;
+      messageDiv.textContent = text;
+
+      if (image) {
+        const img = document.createElement('img');
+        img.src = image;
+        messageDiv.appendChild(img);
+      }
+
+      messagesContainer.appendChild(messageDiv);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      saveChat();
+    }
+
+    // Handle sending messages
+    async function sendMessage() {
+      const text = messageInput.value.trim();
+      const imagePreview = document.getElementById('imagePreview');
+      const image = imagePreview.style.display !== 'none' ? imagePreview.src : null;
+
+      if (text || image) {
+        // Add user message
+        appendMessage(text, 'user', image);
+
+        // Clear input
+        messageInput.value = '';
+        imagePreview.style.display = 'none';
+        imagePreview.src = '';
+
+        // Simulate LLM response (replace this with actual LLM integration)
+        setTimeout(() => {
+          const response = "I understand your message. This is a simulated response. In a real implementation, this would be connected to an LLM API.";
+          appendMessage(response, 'llm');
+        }, 1000);
+      }
+    }
+
+    // Event listeners for chat
+    sendButton.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // Initialize chat history
+    initializeChatHistory();
+
+    // Canvas functionality
+    function resizeCanvas() {
+      const container = canvas.parentElement;
+      canvas.width = container.clientWidth - 30;
+      canvas.height = container.clientHeight - 60;
+    }
+
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseout', stopDrawing);
+
+    function startDrawing(e) {
+      isDrawing = true;
+      [lastX, lastY] = [e.offsetX, e.offsetY];
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+      ctx.beginPath();
+      ctx.moveTo(lastX, lastY);
+      ctx.lineTo(e.offsetX, e.offsetY);
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      [lastX, lastY] = [e.offsetX, e.offsetY];
+    }
+
+    function stopDrawing() {
+      isDrawing = false;
+    }
+
+    // Image upload preview
+    const imageInput = document.getElementById('imageInput');
+    const imagePreview = document.getElementById('imagePreview');
+
+    imageInput.addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          imagePreview.src = e.target.result;
+          imagePreview.style.display = 'block';
+        }
+        reader.readAsDataURL(file);
+      }
+    });
+  </script>
 </body>
 </html>
 
