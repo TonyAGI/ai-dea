@@ -3,7 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AI Assistant Chat with Canvas</title>
+  <title>AI-DEA Chat</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  </script>
   <style>
     /* Global Reset */
     * {
@@ -13,45 +17,47 @@
     }
 
     body {
-      background-color: #0a0a0a;
-      font-family: "Helvetica Neue", Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #1a1a1a;
+      color: #fff;
       height: 100vh;
+      width: 100vw;
+      margin: 0;
+      padding: 0;
       display: grid;
       grid-template-columns: 400px 1fr;
-      grid-template-rows: 1fr;
-      gap: 15px;
-      padding: 15px;
-      color: #fff;
+      gap: 20px;
+      padding: 20px;
+      overflow: hidden;
     }
 
     /* Window styling */
     .window {
-      background-color: #1a1a1a;
+      background: #2a2a2a;
       border-radius: 15px;
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.05);
       padding: 20px;
-      color: #fff;
-      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 40px);
+      min-height: 0;
+      overflow: hidden;
     }
 
     /* Top left windows container */
     .top-left-container {
-      grid-column: 1;
-      grid-row: 1;
       display: flex;
       flex-direction: column;
-      gap: 15px;
+      gap: 20px;
       height: 100%;
+      min-height: 0;
     }
 
     /* Response window */
     .response-window {
       flex: 2;
-      min-height: 0;
-      display: flex;
-      flex-direction: column;
       position: relative;
+      min-height: 0;
     }
 
     .view-toggle {
@@ -76,6 +82,25 @@
       cursor: pointer;
       font-size: 0.9em;
       transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .view-toggle button::before {
+      font-size: 1.1em;
+    }
+
+    .view-toggle button[data-view="ai"]::before {
+      content: "🤖";
+    }
+
+    .view-toggle button[data-view="canvas"]::before {
+      content: "🎨";
+    }
+
+    .view-toggle button[data-view="notes"]::before {
+      content: "📝";
     }
 
     .view-toggle button.active {
@@ -92,7 +117,8 @@
     }
 
     #canvas {
-      flex: 1;
+      width: 100%;
+      height: 100%;
       background: #2a2a2a;
       border-radius: 10px;
       cursor: crosshair;
@@ -100,51 +126,26 @@
     }
 
     .ai-response {
-      flex: 1;
-      background: #2a2a2a;
-      border-radius: 10px;
-      padding: 20px;
+      height: 100%;
       overflow-y: auto;
-    }
-
-    .ai-response::-webkit-scrollbar {
-      width: 8px;
-    }
-
-    .ai-response::-webkit-scrollbar-track {
-      background: #1a1a1a;
-      border-radius: 4px;
-    }
-
-    .ai-response::-webkit-scrollbar-thumb {
-      background: #3a3a3a;
-      border-radius: 4px;
-    }
-
-    .ai-response::-webkit-scrollbar-thumb:hover {
-      background: #4a4a4a;
+      padding-right: 10px;
+      margin-top: 50px; /* Space for view toggle */
     }
 
     .response-item {
-      margin-bottom: 20px;
-      padding: 15px;
       background: rgba(255, 255, 255, 0.03);
-      border-radius: 10px;
       border: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    .response-item:last-child {
-      margin-bottom: 0;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 15px;
     }
 
     .response-item h4 {
-      margin-bottom: 10px;
       color: #6c63ff;
-      font-size: 1.1em;
+      margin-bottom: 10px;
     }
 
     .response-item p {
-      margin-bottom: 15px;
       line-height: 1.6;
       color: #e0e0e0;
     }
@@ -155,126 +156,93 @@
       margin-top: 10px;
     }
 
-    /* Chat history window */
     .chat-history {
       flex: 1;
       min-height: 0;
+      overflow-y: auto;
+    }
+
+    .history-list {
       display: flex;
       flex-direction: column;
-    }
-
-    .chat-history h3 {
-      margin-bottom: 15px;
-      color: #6c63ff;
-    }
-
-    .chat-history .history-list {
-      flex: 1;
-      overflow-y: auto;
-      margin-bottom: 10px;
-      padding: 5px;
-    }
-
-    .chat-history .history-list::-webkit-scrollbar {
-      width: 8px;
-    }
-
-    .chat-history .history-list::-webkit-scrollbar-track {
-      background: #1a1a1a;
-      border-radius: 4px;
-    }
-
-    .chat-history .history-list::-webkit-scrollbar-thumb {
-      background: #3a3a3a;
-      border-radius: 4px;
-    }
-
-    .chat-history .history-list::-webkit-scrollbar-thumb:hover {
-      background: #4a4a4a;
+      gap: 10px;
+      margin-top: 15px;
+      padding-bottom: 15px;
     }
 
     .history-item {
-      padding: 12px;
-      margin-bottom: 8px;
       background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
       border-radius: 8px;
-      font-size: 0.9em;
+      padding: 12px;
       cursor: pointer;
       transition: all 0.2s ease;
-      border: 1px solid rgba(255, 255, 255, 0.05);
     }
 
     .history-item:hover {
       background: rgba(255, 255, 255, 0.05);
-      transform: translateY(-1px);
+      border-color: rgba(255, 255, 255, 0.1);
     }
 
-    /* Main message box */
     .message-box {
-      grid-column: 2;
-      grid-row: 1;
-      height: 100%;
       display: flex;
       flex-direction: column;
+      gap: 15px;
+      height: 100%;
+      min-height: 0;
     }
 
-    .message-box .messages {
+    .messages {
       flex: 1;
       overflow-y: auto;
-      margin-bottom: 15px;
-      padding: 10px;
-    }
-
-    .message-box .messages::-webkit-scrollbar {
-      width: 8px;
-    }
-
-    .message-box .messages::-webkit-scrollbar-track {
-      background: #1a1a1a;
-      border-radius: 4px;
-    }
-
-    .message-box .messages::-webkit-scrollbar-thumb {
-      background: #3a3a3a;
-      border-radius: 4px;
-    }
-
-    .message-box .messages::-webkit-scrollbar-thumb:hover {
-      background: #4a4a4a;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      padding-right: 10px;
+      min-height: 0;
     }
 
     .message {
-      margin-bottom: 15px;
       padding: 12px 15px;
       border-radius: 10px;
-      max-width: 85%;
-      position: relative;
+      max-width: 80%;
+      line-height: 1.5;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
     }
 
     .user-message {
-      background: rgba(108, 99, 255, 0.1);
-      margin-left: auto;
-      border: 1px solid rgba(108, 99, 255, 0.2);
+      background: #6c63ff;
+      align-self: flex-end;
+      color: white;
     }
 
-    .message-box .input-area {
+    .message img {
+      max-width: 200px;
+      max-height: 200px;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+
+    .message p {
+      margin: 0;
+      word-wrap: break-word;
+    }
+
+    .input-area {
       display: flex;
-      gap: 12px;
+      gap: 10px;
       align-items: flex-end;
       background: rgba(255, 255, 255, 0.03);
       padding: 15px;
       border-radius: 12px;
       border: 1px solid rgba(255, 255, 255, 0.05);
+      position: relative;
+      margin-top: auto;
     }
 
-    .message-box .input-container {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .message-box textarea {
+    .message-input {
       flex: 1;
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(255, 255, 255, 0.1);
@@ -282,67 +250,205 @@
       padding: 12px;
       color: #fff;
       font-size: 1em;
-      outline: none;
       resize: none;
-      min-height: 60px;
-      transition: all 0.3s ease;
+      min-height: 50px;
+      max-height: 150px;
+      overflow-y: auto;
     }
 
-    .message-box textarea:focus {
-      border-color: #6c63ff;
-      background: rgba(255, 255, 255, 0.08);
-    }
-
-    .message-box .image-preview {
-      max-width: 100px;
-      max-height: 100px;
-      border-radius: 8px;
-      display: none;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .message-box .button-group {
+    .button-group {
       display: flex;
       gap: 8px;
+      align-items: center;
     }
 
-    .message-box button {
+    .send-button, .attach-button, .book-button {
       background: #6c63ff;
       border: none;
-      padding: 12px 20px;
-      border-radius: 8px;
+      width: 40px;
+      height: 40px;
+      border-radius: 20px;
       color: #fff;
-      font-size: 1em;
+      font-size: 1.2em;
       cursor: pointer;
       transition: all 0.3s ease;
       display: flex;
       align-items: center;
-      gap: 8px;
+      justify-content: center;
     }
 
-    .message-box button:hover {
-      background: #5750d4;
-      transform: translateY(-1px);
-    }
-
-    .message-box .image-upload {
+    .attach-button, .book-button {
       background: rgba(255, 255, 255, 0.1);
-      padding: 12px;
     }
 
-    .message-box .image-upload:hover {
-      background: rgba(255, 255, 255, 0.15);
+    .send-button:hover, .attach-button:hover, .book-button:hover {
+      background: #5750d4;
+      transform: translateY(-2px);
     }
 
-    .message-box .send-button {
+    .attach-button:hover, .book-button:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .image-preview, .pdf-preview {
+      position: absolute;
+      bottom: 100%;
+      left: 15px;
+      max-width: 200px;
+      max-height: 200px;
+      border-radius: 8px;
+      display: none;
+      margin-bottom: 10px;
+      border: 2px solid #6c63ff;
+    }
+
+    .pdf-preview {
+      background: #2a2a2a;
+      padding: 10px;
+      color: #fff;
+      font-size: 0.9em;
+      text-align: center;
       display: flex;
       align-items: center;
-      gap: 8px;
+      justify-content: center;
+      min-height: 60px;
     }
 
-    .message-box .send-button::after {
-      content: "→";
-      font-size: 1.2em;
+    .notes-container {
+      height: 100%;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .notes-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      padding-right: 10px;
+      padding-bottom: 80px; /* Space for add button */
+    }
+
+    .note-item {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 15px;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .note-item:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .note-content {
+      margin-bottom: 10px;
+      line-height: 1.6;
+      color: #e0e0e0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .note-content.expanded {
+      -webkit-line-clamp: unset;
+    }
+
+    .note-timestamp {
+      font-size: 0.8em;
+      color: #888;
+    }
+
+    .note-actions {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      gap: 5px;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .note-item:hover .note-actions {
+      opacity: 1;
+    }
+
+    .note-actions button {
+      background: transparent;
+      border: none;
+      color: #888;
+      cursor: pointer;
+      padding: 5px;
+      border-radius: 5px;
+      transition: all 0.2s ease;
+    }
+
+    .note-actions button:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .add-note-button {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background: #6c63ff;
+      border: none;
+      width: 50px;
+      height: 50px;
+      border-radius: 25px;
+      color: #fff;
+      font-size: 1.5em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+      z-index: 10;
+    }
+
+    .add-note-button:hover {
+      background: #5750d4;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(108, 99, 255, 0.4);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 1200px) {
+      body {
+        grid-template-columns: 350px 1fr;
+      }
+    }
+
+    @media (max-width: 900px) {
+      body {
+        grid-template-columns: 300px 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      body {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr 1fr;
+        gap: 10px;
+        padding: 10px;
+      }
+
+      .top-left-container {
+        height: calc(50vh - 15px);
+      }
+
+      .window {
+        height: calc(50vh - 15px);
+      }
     }
   </style>
 </head>
@@ -352,11 +458,18 @@
       <div class="view-toggle">
         <button class="active" data-view="ai">AI Response</button>
         <button data-view="canvas">Canvas</button>
+        <button data-view="notes">Notes</button>
       </div>
       <div class="ai-response">
         <!-- Response items will be added here -->
       </div>
       <canvas id="canvas"></canvas>
+      <div class="notes-container" style="display: none;">
+        <div class="notes-list">
+          <!-- Notes will be added here -->
+        </div>
+        <button class="add-note-button">+</button>
+      </div>
     </div>
 
     <div class="window chat-history">
@@ -369,201 +482,79 @@
 
   <div class="window message-box">
     <div class="messages">
-      <div class="message user-message">
-        Hi! How can you help me today?
-      </div>
+      <!-- Messages will be added here -->
     </div>
     <div class="input-area">
-      <div class="input-container">
-        <textarea placeholder="Type your message..."></textarea>
-        <img class="image-preview" id="imagePreview" alt="Image preview">
-      </div>
+      <textarea class="message-input" placeholder="Type your message..."></textarea>
       <div class="button-group">
-        <input type="file" id="imageInput" accept="image/*" style="display: none">
-        <button class="image-upload" onclick="document.getElementById('imageInput').click()">📷</button>
-        <button type="button" class="send-button">Send</button>
+        <input type="file" class="image-input" accept="image/*" style="display: none;">
+        <input type="file" class="pdf-input" accept=".pdf,.epub,.mobi" style="display: none;">
+        <button class="attach-button" title="Attach image">📎</button>
+        <button class="book-button" title="Upload book">📚</button>
+        <button class="send-button" title="Send message">➤</button>
       </div>
     </div>
+    <img class="image-preview" alt="Preview">
+    <div class="pdf-preview"></div>
   </div>
 
   <script>
-    // View toggle functionality
-    const viewToggle = document.querySelector('.view-toggle');
+    // DOM Elements
+    const messageInput = document.querySelector('.message-input');
+    const sendButton = document.querySelector('.send-button');
+    const attachButton = document.querySelector('.attach-button');
+    const bookButton = document.querySelector('.book-button');
+    const imageInput = document.querySelector('.image-input');
+    const pdfInput = document.querySelector('.pdf-input');
+    const imagePreview = document.querySelector('.image-preview');
+    const pdfPreview = document.querySelector('.pdf-preview');
+    const messagesContainer = document.querySelector('.messages');
     const aiResponse = document.querySelector('.ai-response');
     const canvas = document.getElementById('canvas');
-    let currentView = 'ai';
-
-    viewToggle.addEventListener('click', (e) => {
-      if (e.target.tagName === 'BUTTON') {
-        const view = e.target.dataset.view;
-        if (view !== currentView) {
-          viewToggle.querySelectorAll('button').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.view === view);
-          });
-
-          if (view === 'canvas') {
-            aiResponse.style.display = 'none';
-            canvas.style.display = 'block';
-            resizeCanvas();
-          } else {
-            canvas.style.display = 'none';
-            aiResponse.style.display = 'block';
-          }
-          currentView = view;
-        }
-      }
-    });
-
-    // Canvas setup
     const ctx = canvas.getContext('2d');
+    const viewToggle = document.querySelector('.view-toggle');
+    const notesContainer = document.querySelector('.notes-container');
+    const notesList = document.querySelector('.notes-list');
+    const addNoteButton = document.querySelector('.add-note-button');
+
+    // State
+    let currentView = 'ai';
     let isDrawing = false;
     let lastX = 0;
     let lastY = 0;
+    let notes = JSON.parse(localStorage.getItem('notes') || '[]');
+    let chatHistory = JSON.parse(localStorage.getItem('chatHistory') || '[]');
+    let stagedImageUrl = null;
+    let stagedPdfFile = null;
 
-    // Chat functionality
-    const messagesContainer = document.querySelector('.messages');
-    const messageInput = document.querySelector('textarea');
-    const sendButton = document.querySelector('.send-button');
-    const historyList = document.querySelector('.history-list');
-    
-    // Store chat history and responses
-    let chatHistory = JSON.parse(localStorage.getItem('chatHistory')) || [];
-    let currentChatId = Date.now().toString();
-    let responseHistory = [];
-
-    // Add response to AI response view
-    function addResponse(text) {
-      const responseDiv = document.createElement('div');
-      responseDiv.className = 'response-item';
-      responseDiv.innerHTML = `
-        <h4>AI Response</h4>
-        <p>${text}</p>
-        <div class="timestamp">${new Date().toLocaleTimeString()}</div>
-      `;
-      aiResponse.insertBefore(responseDiv, aiResponse.firstChild);
-      responseHistory.unshift({
-        text,
-        timestamp: new Date()
-      });
-    }
-
-    // Initialize chat history display
-    function initializeChatHistory() {
-      historyList.innerHTML = '';
-      chatHistory.forEach(chat => {
-        const historyItem = document.createElement('div');
-        historyItem.className = 'history-item';
-        historyItem.textContent = chat.title || 'Chat ' + new Date(chat.id).toLocaleString();
-        historyItem.onclick = () => loadChat(chat.id);
-        historyList.appendChild(historyItem);
-      });
-    }
-
-    // Load a specific chat
-    function loadChat(chatId) {
-      currentChatId = chatId;
-      const chat = chatHistory.find(c => c.id === chatId);
-      if (chat) {
-        messagesContainer.innerHTML = '';
-        chat.messages.forEach(msg => {
-          appendMessage(msg.text, msg.type, msg.image);
-        });
-      }
-    }
-
-    // Save current chat
-    function saveChat() {
-      const messages = Array.from(messagesContainer.children).map(msg => ({
-        text: msg.textContent,
-        type: msg.classList.contains('user-message') ? 'user' : 'llm',
-        image: msg.querySelector('img')?.src
-      }));
-
-      const chatIndex = chatHistory.findIndex(c => c.id === currentChatId);
-      const chatData = {
-        id: currentChatId,
-        title: messages[0]?.text?.substring(0, 30) + '...' || 'New Chat',
-        messages: messages,
-        timestamp: Date.now()
-      };
-
-      if (chatIndex === -1) {
-        chatHistory.push(chatData);
-      } else {
-        chatHistory[chatIndex] = chatData;
-      }
-
+    // History and Rendering
+    function saveHistory() {
       localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
-      initializeChatHistory();
     }
 
-    // Append a message to the chat
-    function appendMessage(text, type, image = null) {
-      const messageDiv = document.createElement('div');
-      messageDiv.className = `message ${type}-message`;
-      messageDiv.textContent = text;
-
-      if (image) {
-        const img = document.createElement('img');
-        img.src = image;
-        messageDiv.appendChild(img);
-      }
-
-      messagesContainer.appendChild(messageDiv);
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
-      saveChat();
+    function renderHistory() {
+      messagesContainer.innerHTML = '';
+      aiResponse.innerHTML = '';
+      chatHistory.forEach(msg => {
+        if (msg.role === 'user') {
+          appendMessage(msg.text, msg.imageUrl, msg.pdfFile);
+        } else if (msg.role === 'assistant') {
+          addResponseToHistory(msg.text, msg.timestamp);
+        }
+      });
     }
 
-    // Handle sending messages
-    async function sendMessage() {
-      const text = messageInput.value.trim();
-      const imagePreview = document.getElementById('imagePreview');
-      const image = imagePreview.style.display !== 'none' ? imagePreview.src : null;
-
-      if (text || image) {
-        // Add user message
-        appendMessage(text, 'user', image);
-
-        // Clear input
-        messageInput.value = '';
-        imagePreview.style.display = 'none';
-        imagePreview.src = '';
-
-        // Simulate LLM response (replace this with actual LLM integration)
-        setTimeout(() => {
-          const response = "I understand your message. This is a simulated response. In a real implementation, this would be connected to an LLM API.";
-          addResponse(response);
-        }, 1000);
-      }
-    }
-
-    // Event listeners for chat
-    sendButton.addEventListener('click', sendMessage);
-    messageInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-      }
-    });
-
-    // Initialize chat history
-    initializeChatHistory();
-
-    // Canvas functionality
+    // Canvas setup
     function resizeCanvas() {
       const container = canvas.parentElement;
-      canvas.width = container.clientWidth - 30;
-      canvas.height = container.clientHeight - 60;
+      canvas.width = container.clientWidth;
+      canvas.height = container.clientHeight;
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
     }
 
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-
-    canvas.addEventListener('mousedown', startDrawing);
-    canvas.addEventListener('mousemove', draw);
-    canvas.addEventListener('mouseup', stopDrawing);
-    canvas.addEventListener('mouseout', stopDrawing);
-
+    // Canvas event handlers
     function startDrawing(e) {
       isDrawing = true;
       [lastX, lastY] = [e.offsetX, e.offsetY];
@@ -574,8 +565,6 @@
       ctx.beginPath();
       ctx.moveTo(lastX, lastY);
       ctx.lineTo(e.offsetX, e.offsetY);
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 2;
       ctx.stroke();
       [lastX, lastY] = [e.offsetX, e.offsetY];
     }
@@ -584,21 +573,338 @@
       isDrawing = false;
     }
 
-    // Image upload preview
-    const imageInput = document.getElementById('imageInput');
-    const imagePreview = document.getElementById('imagePreview');
+    // Message handling
+    async function handleSendMessage() {
+      const messageText = messageInput.value.trim();
+      if (!messageText && !stagedImageUrl && !stagedPdfFile) return;
 
-    imageInput.addEventListener('change', function(e) {
-      const file = e.target.files[0];
+      const userMessage = {
+        role: 'user',
+        text: messageText,
+        imageUrl: stagedImageUrl,
+        pdfFile: stagedPdfFile ? stagedPdfFile.name : null,
+        timestamp: new Date().toLocaleString()
+      };
+      
+      chatHistory.push(userMessage);
+      saveHistory();
+      appendMessage(userMessage.text, userMessage.imageUrl, userMessage.pdfFile);
+      
+      messageInput.value = '';
+      stagedImageUrl = null;
+      stagedPdfFile = null;
+      imagePreview.src = '';
+      imagePreview.style.display = 'none';
+      pdfPreview.textContent = '';
+      pdfPreview.style.display = 'none';
+
+      try {
+        // Prepare the message content
+        let messageContent = messageText;
+        if (userMessage.imageUrl) {
+          messageContent = `[Image attached] ${messageText}`;
+        }
+        if (stagedPdfFile) {
+          // Include the first 1000 characters of the PDF content for context
+          const pdfPreview = stagedPdfFile.content.substring(0, 1000) + '...';
+          messageContent = `[Book file attached: ${stagedPdfFile.name}]\n\nBook content preview:\n${pdfPreview}\n\n${messageText}`;
+        }
+
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": "Bearer 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",
+            "HTTP-Referer": window.location.origin,
+            "X-Title": "AI<>DEA",
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            "model": "deepseek/deepseek-r1-0528:free",
+            "messages": [
+              {
+                "role": "system",
+                "content": "You are AI<>DEA, a highly capable and intelligent virtual assistant designed to understand and support users in their everyday tasks. Your primary focus is to assist with summarizing books and written content in a clear, concise, and insightful manner, helping users grasp the key ideas and themes quickly. You are also skilled in reading, interpreting, and writing code in multiple programming languages, offering assistance with learning, debugging, and software development. In addition, you are able to hold natural and engaging conversations, offering thoughtful responses and useful information that adapt to the user's tone and intent.\n\nYou must always respond in English by default and must not respond in any other language unless explicitly asked to do so by the user. Your communication style should be friendly, attentive, and knowledgeable, balancing professionalism with approachability. You are expected to maintain accuracy, honesty, and clarity in all responses, with a focus on providing helpful and relevant answers tailored to the user's request. Your goal is to be a reliable and intuitive companion across reading, coding, and everyday conversation."
+              },
+              {
+                "role": "user",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": messageContent
+                  },
+                  ...(userMessage.imageUrl ? [{
+                    "type": "image_url",
+                    "image_url": {
+                      "url": userMessage.imageUrl
+                    }
+                  }] : [])
+                ]
+              }
+            ]
+          })
+        });
+
+        const data = await response.json();
+        
+        if (data.choices && data.choices[0]) {
+          const aiMessage = {
+            role: 'assistant',
+            text: data.choices[0].message.content,
+            timestamp: new Date().toLocaleString()
+          };
+          chatHistory.push(aiMessage);
+          saveHistory();
+          addResponseToHistory(aiMessage.text, aiMessage.timestamp);
+        } else {
+          throw new Error('Invalid response format');
+        }
+      } catch (error) {
+        console.error('Error fetching AI response:', error);
+        const errorMessage = {
+          role: 'assistant',
+          text: 'Sorry, I encountered an error while processing your request. Please try again.',
+          timestamp: new Date().toLocaleString()
+        };
+        chatHistory.push(errorMessage);
+        saveHistory();
+        addResponseToHistory(errorMessage.text, errorMessage.timestamp);
+      }
+    }
+
+    function appendMessage(text, imageUrl, pdfFile) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'message user-message';
+      
+      if (imageUrl) {
+        const img = document.createElement('img');
+        img.src = imageUrl;
+        img.alt = 'Uploaded image';
+        messageDiv.appendChild(img);
+      }
+      
+      if (pdfFile) {
+        const pdfInfo = document.createElement('div');
+        pdfInfo.className = 'pdf-info';
+        pdfInfo.innerHTML = `📚 ${pdfFile}`;
+        messageDiv.appendChild(pdfInfo);
+      }
+      
+      if (text) {
+        const p = document.createElement('p');
+        p.textContent = text;
+        messageDiv.appendChild(p);
+      }
+      
+      messagesContainer.appendChild(messageDiv);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    function addResponseToHistory(response, timestamp) {
+      const responseItem = document.createElement('div');
+      responseItem.className = 'response-item';
+      responseItem.innerHTML = `
+        <h4>Response</h4>
+        <p>${response}</p>
+        <div class="timestamp">${timestamp}</div>
+      `;
+      aiResponse.appendChild(responseItem);
+      aiResponse.scrollTop = aiResponse.scrollHeight;
+    }
+
+    // Image handling
+    function handleImageUpload(file) {
       if (file) {
         const reader = new FileReader();
-        reader.onload = function(e) {
-          imagePreview.src = e.target.result;
+        reader.onload = (e) => {
+          // Convert image to base64
+          const base64Image = e.target.result;
+          stagedImageUrl = base64Image;
+          imagePreview.src = base64Image;
           imagePreview.style.display = 'block';
-        }
+        };
         reader.readAsDataURL(file);
       }
+    }
+
+    // PDF handling
+    async function extractPdfContent(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = async function(event) {
+          try {
+            const typedarray = new Uint8Array(event.target.result);
+            const pdf = await pdfjsLib.getDocument(typedarray).promise;
+            let fullText = '';
+            
+            // Extract text from each page
+            for (let i = 1; i <= pdf.numPages; i++) {
+              const page = await pdf.getPage(i);
+              const textContent = await page.getTextContent();
+              const pageText = textContent.items.map(item => item.str).join(' ');
+              fullText += pageText + '\n';
+            }
+            
+            resolve(fullText);
+          } catch (error) {
+            reject(error);
+          }
+        };
+        reader.onerror = reject;
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    async function handlePdfUpload(file) {
+      if (file) {
+        try {
+          const pdfContent = await extractPdfContent(file);
+          stagedPdfFile = {
+            name: file.name,
+            content: pdfContent
+          };
+          pdfPreview.textContent = `📚 ${file.name}`;
+          pdfPreview.style.display = 'flex';
+        } catch (error) {
+          console.error('Error reading PDF:', error);
+          alert('Error reading PDF file. Please try another file.');
+        }
+      }
+    }
+
+    // Notes functionality
+    function saveNotes() {
+      localStorage.setItem('notes', JSON.stringify(notes));
+    }
+
+    function renderNotes() {
+      notesList.innerHTML = '';
+      notes.forEach((note, index) => {
+        const noteElement = document.createElement('div');
+        noteElement.className = 'note-item';
+        
+        // Split note text into words and limit to 10 words
+        const words = note.text.split(' ');
+        const previewText = words.length > 10 
+          ? words.slice(0, 10).join(' ') + '...'
+          : note.text;
+        
+        noteElement.innerHTML = `
+          <div class="note-content" title="Click to expand">${previewText}</div>
+          <div class="note-timestamp">${new Date(note.timestamp).toLocaleString()}</div>
+          <div class="note-actions">
+            <button onclick="event.stopPropagation(); deleteNote(${index})">🗑️</button>
+          </div>
+        `;
+        
+        // Add click handler to toggle expanded view
+        const noteContent = noteElement.querySelector('.note-content');
+        noteElement.addEventListener('click', () => {
+          noteContent.classList.toggle('expanded');
+          noteContent.textContent = noteContent.classList.contains('expanded') 
+            ? note.text 
+            : previewText;
+        });
+        
+        notesList.appendChild(noteElement);
+      });
+    }
+
+    function deleteNote(index) {
+      notes.splice(index, 1);
+      saveNotes();
+      renderNotes();
+    }
+
+    function addNote() {
+      const text = prompt('Enter your note:');
+      if (text) {
+        notes.unshift({
+          text,
+          timestamp: Date.now()
+        });
+        saveNotes();
+        renderNotes();
+      }
+    }
+
+    // View toggle handling
+    function handleViewToggle(view) {
+      if (view === currentView) return;
+
+      viewToggle.querySelectorAll('button').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.view === view);
+      });
+
+      // Hide all views
+      document.querySelector('.ai-response').style.display = 'none';
+      canvas.style.display = 'none';
+      notesContainer.style.display = 'none';
+
+      // Show selected view
+      if (view === 'canvas') {
+        canvas.style.display = 'block';
+        resizeCanvas();
+      } else if (view === 'notes') {
+        notesContainer.style.display = 'flex';
+      } else {
+        document.querySelector('.ai-response').style.display = 'block';
+      }
+      currentView = view;
+    }
+
+    // Event listeners
+    sendButton.addEventListener('click', handleSendMessage);
+    messageInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSendMessage();
+      }
     });
+
+    attachButton.addEventListener('click', () => {
+      imageInput.click();
+    });
+
+    imageInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        handleImageUpload(file);
+      }
+    });
+
+    bookButton.addEventListener('click', () => {
+      pdfInput.click();
+    });
+
+    pdfInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        handlePdfUpload(file);
+      }
+    });
+
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseout', stopDrawing);
+
+    viewToggle.addEventListener('click', (e) => {
+      if (e.target.tagName === 'BUTTON') {
+        handleViewToggle(e.target.dataset.view);
+      }
+    });
+
+    addNoteButton.addEventListener('click', addNote);
+
+    // Initialize
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    renderNotes();
+    renderHistory();
+    
+    // Clear any existing staged image on page load
+    stagedImageUrl = null;
+    imagePreview.style.display = 'none';
   </script>
 </body>
 </html>
