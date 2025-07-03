@@ -1,5 +1,8 @@
 # AI<>DEA
 
+![AI : DEA](https://github.com/user-attachments/assets/46a2f15e-c698-4ab8-b6fa-e830dbe7bfb9)
+
+
 An all-new assistant that brings your AI<>DEA into a working reality. A modern, feature-rich AI chat interface with canvas drawing, note-taking, and document processing capabilities.
 
 ## 🚀 Features
