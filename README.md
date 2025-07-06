@@ -1,4 +1,4 @@
-# AI<>DEA
+# A/DEA
 
 ![AI : DEA](https://github.com/user-attachments/assets/46a2f15e-c698-4ab8-b6fa-e830dbe7bfb9)
 
