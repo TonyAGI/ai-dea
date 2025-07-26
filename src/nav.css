@@ -78,6 +78,7 @@ body {
   border: 2px solid transparent;
   transition: all 0.7s ease;
   white-space: nowrap;
+  
 }
 
 .navbar-container .navbar-menu li a:hover {
